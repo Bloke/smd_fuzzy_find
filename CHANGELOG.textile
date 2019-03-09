@@ -1,0 +1,52 @@
+h1. Changelog
+
+h2. 0.30 - 2019-03-09
+
+* PHP 7 compatibility
+* Fixed string offset warning if start_index is a float
+
+h2. 0.21 - 2008-12-19
+
+* Fixed MLP string bug
+
+h2. 0.20 - 2008-12-02
+
+* Requires smd_lib v0.33+
+* Tentative Unicode support
+* Will read search locations set by wet_haystack
+* Enhanced @subcats@ and renamed it @sublevel@
+* Added @delim@
+* Enhanced debug output
+* Plugin can now be used as a container
+* Tightened code, enhanced @?@ and @!@ support
+* Fixed @smd_getWord@ (again!) and field list bug
+
+h2. 0.12 - 2008-04-01
+
+* Moved some smd_lib functions to the plugin
+* Requires smd_lib_v0.32+
+
+h2. 0.11 - 2008-01-23
+
+* Fixed MLPing some strings broke the plugin (thanks Els)
+
+h2. 0.10 - 2007-12-30
+
+* Official first release
+* Added @labeltag@ and custom field support
+* Fixed bad counting in @limit@ attribute (thanks Els)
+
+h2. 0.03 - 2007-08-06
+
+* Fixed multi-word searching (@smd_getWord@ bug) and @search_result_excerpt@
+* Added @category@ and @status@ support
+
+h2. 0.02 - 2007-03-31
+
+* Fixed case sensitivity
+* Sped up and improved wordlist generation
+* Added @refine@ to switch off soundex/metaphone if required
+
+h2. 0.02 - 2007-03-26
+
+* Initial public beta

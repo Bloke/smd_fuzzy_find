@@ -17,7 +17,7 @@ $plugin['name'] = 'smd_fuzzy_find';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.23';
+$plugin['version'] = '0.30';
 $plugin['author'] = 'Stef Dawson';
 $plugin['author_uri'] = 'http://stefdawson.com';
 $plugin['description'] = 'Offers alternative spellings and/or close-matching articles from search terms.';
@@ -902,7 +902,7 @@ bc. <txp:if_search>
 
 Exact matches will be processed as normal but mismatches will be handled by smd_fuzzy_find. If you try to use smd_fuzzy_find on its own, you will likely receive a warning about a missing @<txp:article />@ tag.
 
-h3(tag). Attributes
+h3. Attributes
 
 |_. Attribute name |_. Default |_. Values |_. Description |
 | search_term | @?q@ | @?q@ or any text | You may use a fixed string here but it's rather pointless |
@@ -937,17 +937,6 @@ h2. Known issues
 * Searching for a word with an apostrophe in it may cause odd character encoding or incomplete results
 * Searching for multiple (space-separated) words can lead to odd results
 * Sometimes it makes you laugh and picks something that seems totally unrelated
-
-h2. Changelog
-
-* 26 Mar 07 | v0.01 | Initial public beta
-* 31 Mar 07 | v0.02 | Fixed case sensitivity ; sped up and improved wordlist generation ; added @refine@ to switch off soundex/metaphone if required
-* 06 Aug 07 | v0.03 | Fixed: multi-word searching (@smd_getWord@ bug) and @search_result_excerpt@ ; added @category@ and @status@ support
-* 30 Dec 07 | v0.1 | Official first release. Added @labeltag@ and custom field support ; fixed bad counting in @limit@ attribute (thanks Els)
-* 23 Jan 08 | v0.11 | Fixed: MLPing some strings broke the plugin (thanks Els)
-* 01 Apr 08 | v0.12 | Moved some smd_lib functions to the plugin ; requires smd_lib_v0.32
-* 02 Dec 08 | v0.2 | Requires smd_lib v0.33 ; tentative unicode support ; will read search locations set by wet_haystack ; enhanced @subcats@ and renamed it @sublevel@ ; added @delim@ ; enhanced debug output ; plugin can now be used as a container ; tightened code, enhanced @?@ and @!@ support ; fixed smd_getWord (again!) and field list bug
-19 Dec 08 | v0.21 | Fixed MLP string bug
 
 h2. Credits
 

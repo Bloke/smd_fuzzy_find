@@ -1,0 +1,82 @@
+h1. smd_fuzzy_find
+
+Ever wanted TXP's search facility to be a little more, well, inaccurate? Help people with fat fingers to find what they were actually looking for with this tool that can find mis-spelled or like-sounding words from search results.
+
+Results are ordered by approximate relevancy and it's automatically context-sensitive because the pool of words it compares against are from your site. On a zoo website, someone typing in "lino" won't get articles about flooring but more likely articles about lions, which is what they really wanted. We hope.
+
+h2. Features
+
+* Search for similarly spelled, or similar sounding words (may be switched on/off)
+* Limit the search to article @status@, @section@ or @category@ to speed up proceedings
+* Tweak sensitivity to give better results (more specific, less likely to find a match) or general results (less specific, may match stuff you don't expect)
+* Can offer links to exact search terms if you wish (a bit like Google's "Did you mean ...")
+* Display matching articles using a form/container. Default is the built-in @search_results@ form
+* Unless overridden using the @match_with@ attribute, the Title and Body will be searched. Alternatively, if you have set the search locations using "wet_haystack":http://forum.textpattern.com/viewtopic.php?id=29036 then those places will be searched instead
+
+h2. Author
+
+"Stef Dawson":http://stefdawson.com/commentForm, with notable mention to "Jarno Elonen":http://elonen.iki.fi/code/misc-notes/appr-search-php/index.html for the Fuzzy Find algorithm which -- to this day -- remains mere voodoo to me.
+
+h2. Installation / Uninstallation
+
+p(required). Requires Textpattern 4.0.7 and "smd_lib v0.33":http://stefdawson.com/downloads/smd_lib_v0.33.txt must be installed and activated.
+
+Download the plugin from either "textpattern.org":http://textpattern.org/plugins/932/smd_fuzzy_find, or the "software page":http://stefdawson.com/sw, paste the code into the TXP Admin -> Plugins pane, install and enable the plugin. Visit the "forum thread":http://forum.textpattern.com/viewtopic.php?id=25367 for more info or to report on the success or otherwise of the plugin.
+
+To uninstall, simply delete from the Admin -> Plugins page.
+
+h2. Usage
+
+The plugin is *not* a replacement for the built-in TXP search; it should be used to augment it, like this:
+
+bc. <txp:if_search>
+  <dl class="results">
+    <txp:chh_if_data>
+      <txp:article limit="8" searchform="excerpts" />
+    <txp:else />
+      <txp:smd_fuzzy_find form="excerpts" />
+    </txp:chh_if_data>
+  </dl>
+</txp:if_search>
+
+Exact matches will be processed as normal but mismatches will be handled by smd_fuzzy_find. If you try to use smd_fuzzy_find on its own, you will likely receive a warning about a missing @<txp:article />@ tag.
+
+h3. Attributes
+
+|_. Attribute name |_. Default |_. Values |_. Description |
+| search_term | @?q@ | @?q@ or any text | You may use a fixed string here but it's rather pointless |
+| match_with | @article:body;title@ or wet_haystack criteria | @keywords@ / @body@ / @excerpt@ / @category1@ / @category2@ / @section@ / @id@ / @authorid@ / @title@ / @custom_1@ / etc | Which article fields you would like to match. Define the object you want to look in (currently only @article@ is supported) followed by a colon, then a list of semi-colon separated places to look |
+| show | @words, articles@ |  @words, articles@ / @words@ / @articles@ | Whether to list the closest matching articles, the closest matching search terms, or both |
+| section | _unset_ (i.e. search the whole site) | any valid section containing articles | Limit the search to one or more sections; give a comma-separated list. You can use @?s@ for the current section or @!s@ for anything except the current section, or you can read the value from another part of the article, a custom field / txp:variable / url variable |
+| category | _unset_ (i.e. search all categories) | any valid article category | Limit the search to one or more categories; give a comma-separated list. You can use @?c@ for the current global category or @!c@ for all cats except the current one. Like @section@ you can read from other places too |
+| sublevel (formerly _subcats_)| @0@ | integer / @all@ | Number of subcategory levels to traverse. @0@ = top-level only; @1@ = top level + one sub-level; and so on |
+| status | @live, sticky@ | @live@ / @sticky@ / @hidden@ / @pending@ / @draft@ or any combination | Restricts the search to particular types of document status |
+| tolerance | @2@ | 0 - 5 | How fuzzy the search is and how long the minimum search term is allowed to be. 0 means a very close match, that allows short search words. 5 means it's quite relaxed and is likelt return nothing like what you searched for; search words must then be longer, roughly >7 characters. Practical values are 0-3 |
+| refine  | @soundex, metaphone@ | @soundex@, @metaphone@ or @soundex, metaphone@ | Switch on soundex and/or metaphone support for potentially better matching (though it's usually only of use in English) |
+| case_sensitive | @0@ | @0@ (off) / @1@ (case-sensitive) | Does what it says on the tin |
+| min_word_length | @4@ | integer | The minimum word length allowed in the search results |
+| limit | @words:5, articles:10@ | integer / @words:@ + a number / @articles:@ + a number | The maximum number of words and/or articles to display in the results. Use a single integer to limit both to the same value. Specify @articles:5@ to remove any limit on the number of alternative search words offered, and limit the number of returned articles to a maximum of 5. Similarly, @words:4@ will remove the article limit, but only show a maximum of 4 alternative words. Both of these are subject to their respective @show@ options being set |
+| form | @search_results@ | any valid form name | The TXP form with which to process each matching article. You may also use the plugin as a container. Note that @<txp:search_result_excerpt />@ is honoured as closely as possible, i.e. if the closest words are found in the keywords, body or excerpt fields. If they are found in any other location (e.g. custom_3) the article title will be returned but the search_result_excerpt will likely be empty. This is a limitation of that tag, not the plugin directly |
+| delim | @,@ | any characters | Change the delimiter for all options that take a comma-separated list |
+| no_match_label | MLP: @no_match@ | any text or MLP string | The phrase to display when no matches (maybe not even fuzzy ones) are found. Use @no_match_label=""@ to turn it off |
+| suggest_label | MLP: @suggest@ | any text or MLP string | The phrase to display immediately prior to showing close-matching articles/words. Use @suggest_label=""@ to switch it off |
+| too_short_label | MLP: @too_short@ | any text or MLP string  | Searches of under about 3 characters (sometimes more depending on your content) are too short for any reasonable fuzziness to be applied. This message is displayed in that circumstance. Use @too_short_label=""@ to switch it off |
+| labeltag | @p@ | any valid tag name, without its brackets | The (X)HTML tag in which to wrap any labels |
+
+h2. Tips and tricks
+
+* If you can, limit the search criteria using @status@, @section@ and @category@ to improve performance
+* Tweak the @refine@ options to see if you get better or worse results for your content / language
+* Most of the default values are optimal for good results, but for scientific or specialist sites you may wish to increase the @tolerance@ and @min_word_length@ to avoid false positives
+* For offering an advanced search facility, write an HTML form that allows people to customise the search criteria (e.g. check boxes for @metaphone@ / @soundex / case_sensitive@ ; text boxes for @tolerance@ / @min_word_length@ / @limit@ ; select lists of categories to search ; etc). Then use a series of smd_if statements inside your @<txp:if_search />@ to check for the existence of each URL variable, check they have acceptable values and then plug them into the smd_fuzzy_find tag using replacements such as @tolerance="{smd_if_tolerance}"@
+
+h2. Known issues
+
+* Slow with large article sets
+* Searching for a word with an apostrophe in it may cause odd character encoding or incomplete results
+* Searching for multiple (space-separated) words can lead to odd results
+* Sometimes it makes you laugh and picks something that seems totally unrelated
+
+h2. Credits
+
+This plugin wouldn't have existed without the original Fuzzy Find algorithm by Jarno Elonen, as noted above. All kudos goes in that direction. Also, extended thanks to the beta testers, especially Els Lepelaars for feedback and unending patience during development.

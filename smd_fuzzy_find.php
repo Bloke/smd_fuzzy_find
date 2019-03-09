@@ -77,422 +77,423 @@ require_plugin('smd_lib');
 global $smd_fuzzLang;
 
 $smd_fuzz_str = array(
-	'too_short' => 'The text you are searching for is probably too short. Try a longer word. ',
-	'no_match' => 'Sorry, no results matched "{search_term}" exactly. ',
-	'suggest' => 'Here are the closest matching {thingies} that may help you find what you are looking for: ',
-	'suggest_join' => 'and',
-	'articles' => 'articles',
-	'words' => 'words',
+    'too_short' => 'The text you are searching for is probably too short. Try a longer word. ',
+    'no_match' => 'Sorry, no results matched "{search_term}" exactly. ',
+    'suggest' => 'Here are the closest matching {thingies} that may help you find what you are looking for: ',
+    'suggest_join' => 'and',
+    'articles' => 'articles',
+    'words' => 'words',
 );
 
 $smd_fuzzLang = new smd_MLP('smd_fuzzy_find', 'smd_fuzz', $smd_fuzz_str);
 
 if (class_exists('\Textpattern\Tag\Registry')) {
-	Txp::get('\Textpattern\Tag\Registry')->register('smd_fuzzy_find');
+    Txp::get('\Textpattern\Tag\Registry')->register('smd_fuzzy_find');
 }
 
 function smd_fuzzy_find($atts, $thing = '')
 {
-	global $pretext, $smd_fuzzLang, $prefs;
+    global $pretext, $smd_fuzzLang, $prefs;
 
-	extract(lAtts(array(
-		'form'            => 'search_results',
-		'section'         => '',
-		'category'        => '',
-		'sublevel'        => '0',
-		'search_term'     => '?q',
-		'match_with'      => '',
-		'tolerance'       => '2',
-		'min_word_length' => '4',
-		'delim'           => ',',
-		'limit'           => '',
-		'case_sensitive'  => '0',
-		'refine'          => '',
-		'show'            => '',
-		'status'          => '',
-		'debug'           => '0',
-		'no_match_label'  => '#',
-		'suggest_label'   => '#',
-		'too_short_label' => '#',
-		'labeltag'        => 'p',
-	), $atts));
+    extract(lAtts(array(
+        'form'            => 'search_results',
+        'section'         => '',
+        'category'        => '',
+        'sublevel'        => '0',
+        'search_term'     => '?q',
+        'match_with'      => '',
+        'tolerance'       => '2',
+        'min_word_length' => '4',
+        'delim'           => ',',
+        'limit'           => '',
+        'case_sensitive'  => '0',
+        'refine'          => '',
+        'show'            => '',
+        'status'          => '',
+        'debug'           => '0',
+        'no_match_label'  => '#',
+        'suggest_label'   => '#',
+        'too_short_label' => '#',
+        'labeltag'        => 'p',
+    ), $atts));
 
-	// Process defaults; most can't be set in lAtts() because of the custom delimiter
-	$match_with = empty($match_with) ? "article:" . implode(";", do_list($prefs['searchable_article_fields'])) : $match_with;
-	$limit = ($limit) ? $limit : "words:5" .$delim. "articles:10";
-	$refine = ($refine) ? $refine : "metaphone" .$delim. "soundex";
-	$show = ($show) ? $show : "words" .$delim. "articles";
-	$status = ($status) ? $status : "live" .$delim. "sticky";
+    // Process defaults; most can't be set in lAtts() because of the custom delimiter
+    $match_with = empty($match_with) ? "article:" . implode(";", do_list($prefs['searchable_article_fields'])) : $match_with;
+    $limit = ($limit) ? $limit : "words:5" .$delim. "articles:10";
+    $refine = ($refine) ? $refine : "metaphone" .$delim. "soundex";
+    $show = ($show) ? $show : "words" .$delim. "articles";
+    $status = ($status) ? $status : "live" .$delim. "sticky";
 
-	$refineAllow = array("metaphone", "soundex");
-	$showAllow = array("articles", "words");
-	$colNames = array('Keywords' => "article:keywords",
-							'Body' => "article:body",
-							'Excerpt' => "article:excerpt",
-							'Category1' => "article:category1",
-							'Category2' => "article:category2",
-							'Section' => "article:section",
-							'ID' => "article:id",
-							'AuthorID' => "article:authorid",
-							'Title' => "article:title",
-							'message' => "comments:message",
-							'email' => "comments:email",
-							'name' => "comments:name",
-							'web' => "comments:web",
-							);
+    $refineAllow = array("metaphone", "soundex");
+    $showAllow = array("articles", "words");
+    $colNames = array(
+        'Keywords'  => "article:keywords",
+        'Body'      => "article:body",
+        'Excerpt'   => "article:excerpt",
+        'Category1' => "article:category1",
+        'Category2' => "article:category2",
+        'Section'   => "article:section",
+        'ID'        => "article:id",
+        'AuthorID'  => "article:authorid",
+        'Title'     => "article:title",
+        'message'   => "comments:message",
+        'email'     => "comments:email",
+        'name'      => "comments:name",
+        'web'       => "comments:web",
+    );
 
-	$places = array('textpattern' => "article", 'txp_discuss' => "comments");
-	$clause = array();
-	$refineList = array();
-	$dbTables = array();
-	$dbFields = array();
+    $places = array('textpattern' => "article", 'txp_discuss' => "comments");
+    $clause = array();
+    $refineList = array();
+    $dbTables = array();
+    $dbFields = array();
 
-	// Expand the args in case they're ? or ! shortcuts, and do some validity checking.
-	$search_term = smd_doList($search_term, false, "", false, $delim);
-	$search_term = $search_term[0][0];
+    // Expand the args in case they're ? or ! shortcuts, and do some validity checking.
+    $search_term = smd_doList($search_term, false, "", false, $delim);
+    $search_term = $search_term[0][0];
 
-	if ($debug > 1) {
-		echo "++ SEARCH TERM ++";
-		dmp($search_term);
-	}
+    if ($debug > 1) {
+        echo "++ SEARCH TERM ++";
+        dmp($search_term);
+    }
 
-	$refine = do_list($refine, $delim);
+    $refine = do_list($refine, $delim);
 
-	for ($idx = 0; $idx < count($refine); $idx++) {
-		if (in_array($refine[$idx], $refineAllow)) {
-			$refineList[$idx] = $refine[$idx];
-		}
-	}
+    for ($idx = 0; $idx < count($refine); $idx++) {
+        if (in_array($refine[$idx], $refineAllow)) {
+            $refineList[$idx] = $refine[$idx];
+        }
+    }
 
-	$meta_search = (in_array("metaphone", $refineList)) ? metaphone($search_term) : "";
-	$sound_search = (in_array("soundex", $refineList)) ? soundex($search_term) : "";
-	$tolerance = intval($tolerance);
+    $meta_search = (in_array("metaphone", $refineList)) ? metaphone($search_term) : "";
+    $sound_search = (in_array("soundex", $refineList)) ? soundex($search_term) : "";
+    $tolerance = intval($tolerance);
 
-	// match_with needs to be built into a series of arrays of database tables and columns
-	$lookin = smd_split($match_with, false, ":,\s");
+    // match_with needs to be built into a series of arrays of database tables and columns
+    $lookin = smd_split($match_with, false, ":,\s");
 
-	// Loop over pairs of elements
-	for ($idx = 0; $idx < count($lookin); $idx += 2) {
-		if (($tmp = array_search($lookin[$idx], $places)) !== false) {
-			$dbTables[] = $tmp;
-			$dbFieldList = smd_split($lookin[$idx+1], false, ";");
-			$dbField = array();
+    // Loop over pairs of elements
+    for ($idx = 0; $idx < count($lookin); $idx += 2) {
+        if (($tmp = array_search($lookin[$idx], $places)) !== false) {
+            $dbTables[] = $tmp;
+            $dbFieldList = smd_split($lookin[$idx+1], false, ";");
+            $dbField = array();
 
-			foreach ($dbFieldList as $lookField) {
-				$key = array_search($lookin[$idx].":".strtolower($lookField), $colNames);
+            foreach ($dbFieldList as $lookField) {
+                $key = array_search($lookin[$idx].":".strtolower($lookField), $colNames);
 
-				if ($key) {
-					$dbField[] = $key;
-				} else if (strpos($lookField, "custom_") === 0) {
-					$dbField[] = $lookField;
-				}
-			}
+                if ($key) {
+                    $dbField[] = $key;
+                } else if (strpos($lookField, "custom_") === 0) {
+                    $dbField[] = $lookField;
+                }
+            }
 
-			if (count($dbField) > 0) {
-				$dbFields[] = $dbField;
-			}
-		}
-	}
+            if (count($dbField) > 0) {
+                $dbFields[] = $dbField;
+            }
+        }
+    }
 
-	if (count($dbTables) == 0 || count($dbFields) == 0) {
-		$dbTables[] = "textpattern";
-		$dbFields[] = "*";
-	}
+    if (count($dbTables) == 0 || count($dbFields) == 0) {
+        $dbTables[] = "textpattern";
+        $dbFields[] = "*";
+    }
 
-	if ($debug) {
-		echo "++ FIELDS ++";
-		dmp($dbFields);
-	}
+    if ($debug) {
+        echo "++ FIELDS ++";
+        dmp($dbFields);
+    }
 
-	$showList = do_list($show, $delim);
+    $showList = do_list($show, $delim);
 
-	for ($idx = count($showList); $idx > 0; $idx--) {
-		if (!in_array($showList[$idx-1], $showAllow)) {
-			unset($showList[$idx]);
-		}
-	}
+    for ($idx = count($showList); $idx > 0; $idx--) {
+        if (!in_array($showList[$idx-1], $showAllow)) {
+            unset($showList[$idx]);
+        }
+    }
 
-	$limitBy = array();
-	$limit = do_list($limit, $delim);
+    $limitBy = array();
+    $limit = do_list($limit, $delim);
 
-	foreach ($limit as $limOption) {
-		if (is_numeric($limOption)) {
-			$limitBy["articles"] = $limOption;
-			$limitBy["words"] = $limOption;
-		} else {
-			$limsplit = smd_split($limOption, false, ":");
+    foreach ($limit as $limOption) {
+        if (is_numeric($limOption)) {
+            $limitBy["articles"] = $limOption;
+            $limitBy["words"] = $limOption;
+        } else {
+            $limsplit = smd_split($limOption, false, ":");
 
-			if ((count($limsplit) == 2) && (in_array($limsplit[0], $showAllow)) && (is_numeric($limsplit[1]))) {
-				$limitBy[$limsplit[0]] = $limsplit[1];
-			}
-		}
-	}
+            if ((count($limsplit) == 2) && (in_array($limsplit[0], $showAllow)) && (is_numeric($limsplit[1]))) {
+                $limitBy[$limsplit[0]] = $limsplit[1];
+            }
+        }
+    }
 
-	$thingiesL10n = array();
+    $thingiesL10n = array();
 
-	foreach ($showList as $item) {
-		$thingiesL10n[] = $smd_fuzzLang->gTxt($item);
-	}
+    foreach ($showList as $item) {
+        $thingiesL10n[] = $smd_fuzzLang->gTxt($item);
+    }
 
-	$thingies = implode(" ".$smd_fuzzLang->gTxt('suggest_join')." ", $thingiesL10n);
-	$no_match_label = ($no_match_label == "#") ? $smd_fuzzLang->gTxt('no_match', array("{search_term}" => $search_term)) : $no_match_label;
-	$suggest_label = ($suggest_label == "#") ? $smd_fuzzLang->gTxt('suggest', array("{thingies}" => $thingies)) : $suggest_label;
-	$too_short_label = ($too_short_label == "#") ? $smd_fuzzLang->gTxt('too_short') : $too_short_label;
+    $thingies = implode(" ".$smd_fuzzLang->gTxt('suggest_join')." ", $thingiesL10n);
+    $no_match_label = ($no_match_label == "#") ? $smd_fuzzLang->gTxt('no_match', array("{search_term}" => $search_term)) : $no_match_label;
+    $suggest_label = ($suggest_label == "#") ? $smd_fuzzLang->gTxt('suggest', array("{thingies}" => $thingies)) : $suggest_label;
+    $too_short_label = ($too_short_label == "#") ? $smd_fuzzLang->gTxt('too_short') : $too_short_label;
 
-	// Roll any status, section and category filters into the initial query
-	$clause[] = '1=1';
+    // Roll any status, section and category filters into the initial query
+    $clause[] = '1=1';
 
-	if (in_array("textpattern", $dbTables)) {
-		// Status
-		list($statinc, $statexc) = smd_doList($status, false, '', false, $delim);
+    if (in_array("textpattern", $dbTables)) {
+        // Status
+        list($statinc, $statexc) = smd_doList($status, false, '', false, $delim);
 
-		for ($idx = 0; $idx < count($statinc); $idx++) {
-			$tmpa[] = doQuote(getStatusNum($statinc[$idx]));
-		}
+        for ($idx = 0; $idx < count($statinc); $idx++) {
+            $tmpa[] = doQuote(getStatusNum($statinc[$idx]));
+        }
 
-		if ($tmpa) {
-			$clause[] = 'Status IN (' .implode(",", $tmpa). ')';
-		}
+        if ($tmpa) {
+            $clause[] = 'Status IN (' .implode(",", $tmpa). ')';
+        }
 
-		// Section
-		list($secinc, $secexc) = smd_doList($section, false, '', true, $delim);
+        // Section
+        list($secinc, $secexc) = smd_doList($section, false, '', true, $delim);
 
-		if ($secinc) {
-			$clause[] = '(Section IN (' .implode(",", $secinc). '))';
-		}
+        if ($secinc) {
+            $clause[] = '(Section IN (' .implode(",", $secinc). '))';
+        }
 
-		// Category
-		list($catinc, $catexc) = smd_doList($category, false, "article:".$sublevel, true, $delim);
+        // Category
+        list($catinc, $catexc) = smd_doList($category, false, "article:".$sublevel, true, $delim);
 
-		if ($catinc) {
-			$imp = implode(",", $catinc);
-			$clause[] = '(Category1 IN (' .$imp. ') OR Category2 IN (' .$imp. '))';
-		}
+        if ($catinc) {
+            $imp = implode(",", $catinc);
+            $clause[] = '(Category1 IN (' .$imp. ') OR Category2 IN (' .$imp. '))';
+        }
 
-		// Combine the query portions
-		$clause = implode(" AND ", $clause);
+        // Combine the query portions
+        $clause = implode(" AND ", $clause);
 
-		// Add on any exclusions
-		$tmpa = array();
+        // Add on any exclusions
+        $tmpa = array();
 
-		for ($idx = 0; $idx < count($statexc); $idx++) {
-			$tmpa[] = doQuote(getStatusNum($statexc[$idx]));
-		}
+        for ($idx = 0; $idx < count($statexc); $idx++) {
+            $tmpa[] = doQuote(getStatusNum($statexc[$idx]));
+        }
 
-		$clause .= ($tmpa) ? ' AND Status NOT IN ('.implode(",", $tmpa).')' : '';
+        $clause .= ($tmpa) ? ' AND Status NOT IN ('.implode(",", $tmpa).')' : '';
 
-		$imp = implode(",", $secexc);
-		$clause .= ($secexc) ? ' AND Section NOT IN ('.$imp.')' : '';
+        $imp = implode(",", $secexc);
+        $clause .= ($secexc) ? ' AND Section NOT IN ('.$imp.')' : '';
 
-		$imp = implode(",", $catexc);
-		$clause .= ($catexc) ? ' AND Category1 NOT IN ('.$imp.') AND Category2 NOT IN ('.$imp.')' : '';
-	}
+        $imp = implode(",", $catexc);
+        $clause .= ($catexc) ? ' AND Category1 NOT IN ('.$imp.') AND Category2 NOT IN ('.$imp.')' : '';
+    }
 
-	$clause = is_array($clause) ? join(" ", $clause) : $clause;
-	//TODO: comments
+    $clause = is_array($clause) ? join(" ", $clause) : $clause;
+    //TODO: comments
 /*
-	if (in_array("txp_discuss",$dbTables)) {
-		$clause .= " AND textpattern.ID = txp_discuss.parentid";
-	}
+    if (in_array("txp_discuss",$dbTables)) {
+        $clause .= " AND textpattern.ID = txp_discuss.parentid";
+    }
 */
 
-	if ($debug > 0) {
-		echo "++ WHERE CLAUSE ++";
-		dmp($clause);
-	}
+    if ($debug > 0) {
+        echo "++ WHERE CLAUSE ++";
+        dmp($clause);
+    }
 
-	$out = "";
-	// Perform the searches
-	$finder = new smd_FuzzyFind($search_term, $tolerance);
+    $out = "";
+    // Perform the searches
+    $finder = new smd_FuzzyFind($search_term, $tolerance);
 
-	if ($finder->too_short_err) {
-		$out .= ($labeltag == "") ? "" : "<" .$labeltag.">";
-		$out .= $no_match_label;
-		$out .= $too_short_label;
-		$out .= ($labeltag == "") ? "" : "</" .$labeltag.">";
-	} else {
-		$cols = "*" . ((in_array("textpattern", $dbTables)) ? ", unix_timestamp(textpattern.Posted) AS uPosted, unix_timestamp(textpattern.LastMod) AS uLastMod, unix_timestamp(textpattern.Expires) AS uExpires" : "");
-		$rs = safe_rows_start($cols, implode($dbTables, ", "), $clause, $debug);
+    if ($finder->too_short_err) {
+        $out .= ($labeltag == "") ? "" : "<" .$labeltag.">";
+        $out .= $no_match_label;
+        $out .= $too_short_label;
+        $out .= ($labeltag == "") ? "" : "</" .$labeltag.">";
+    } else {
+        $cols = "*" . ((in_array("textpattern", $dbTables)) ? ", unix_timestamp(textpattern.Posted) AS uPosted, unix_timestamp(textpattern.LastMod) AS uLastMod, unix_timestamp(textpattern.Expires) AS uExpires" : "");
+        $rs = safe_rows_start($cols, implode($dbTables, ", "), $clause, $debug);
 
-		if (in_array("textpattern",$dbTables)) {
-			$opform = ($thing) ? $thing : fetch_form($form);
-		}
+        if (in_array("textpattern",$dbTables)) {
+            $opform = ($thing) ? $thing : fetch_form($form);
+        }
 
-		$pageurl = smd_removeQSVar($pretext['request_uri'],'q');
-		$allFields = "";
-		$artList = array();
-		$wordList = array();
-		$termList = array();
+        $pageurl = smd_removeQSVar($pretext['request_uri'],'q');
+        $allFields = "";
+        $artList = array();
+        $wordList = array();
+        $termList = array();
 
-		while ($row = nextRow($rs)) {
-			$allFields = "";
-			// Join all the required places to look into a looong text block
-			if ($dbFields[0] == "*") {
-				foreach ($row as $colname) {
-					$allFields .= $colname." ";
-				}
-			} else {
-				foreach ($dbFields as $fieldRow) {
-					foreach ($fieldRow as $theField) {
-						$allFields .= $row[$theField]." ";
-					}
-				}
-			}
+        while ($row = nextRow($rs)) {
+            $allFields = "";
+            // Join all the required places to look into a looong text block
+            if ($dbFields[0] == "*") {
+                foreach ($row as $colname) {
+                    $allFields .= $colname." ";
+                }
+            } else {
+                foreach ($dbFields as $fieldRow) {
+                    foreach ($fieldRow as $theField) {
+                        $allFields .= $row[$theField]." ";
+                    }
+                }
+            }
 
-			// Remove between-word Unicode punctuation and replace with space
-			$allFields = strip_tags($allFields);
-			$allFields = trim(preg_replace('#[\p{P}]+#u', ' ', $allFields));
+            // Remove between-word Unicode punctuation and replace with space
+            $allFields = strip_tags($allFields);
+            $allFields = trim(preg_replace('#[\p{P}]+#u', ' ', $allFields));
 
-			// Split the remainder by (single or multiple) spaces
-			$werds = preg_split('/\s+/', $allFields, -1, PREG_SPLIT_NO_EMPTY);
-			// ...and reconstitute the unique words as a huge space-delimited string
-			$werds = implode(" ",array_unique($werds));
-			// Take into account case sensitivity
-			$werds = ($case_sensitive) ? $werds : strtolower($werds);
+            // Split the remainder by (single or multiple) spaces
+            $werds = preg_split('/\s+/', $allFields, -1, PREG_SPLIT_NO_EMPTY);
+            // ...and reconstitute the unique words as a huge space-delimited string
+            $werds = implode(" ",array_unique($werds));
+            // Take into account case sensitivity
+            $werds = ($case_sensitive) ? $werds : strtolower($werds);
 
-			// Find close word matches
-			$matches = $finder->search($werds);
+            // Find close word matches
+            $matches = $finder->search($werds);
 
-			if ($debug > 1) {
-				if ($debug > 3 || $matches) {
-					echo "++ UNIQUE WORDS ++";
-					dmp($werds);
-				}
+            if ($debug > 1) {
+                if ($debug > 3 || $matches) {
+                    echo "++ UNIQUE WORDS ++";
+                    dmp($werds);
+                }
 
-				if ($matches) {
-					echo "++ CLOSEST MATCHES ++";
-					dmp($matches);
-				}
-			}
+                if ($matches) {
+                    echo "++ CLOSEST MATCHES ++";
+                    dmp($matches);
+                }
+            }
 
-			if (count($matches) > 0) {
-				$shortestDist = 100; // A stupidly high number to start with
-				$shortestMetaDist = -1;
-				$closestWord = "";
-				$closestMetaWord = "";
-				$max_term_len = 0;
+            if (count($matches) > 0) {
+                $shortestDist = 100; // A stupidly high number to start with
+                $shortestMetaDist = -1;
+                $closestWord = "";
+                $closestMetaWord = "";
+                $max_term_len = 0;
 
-				// Build a unique array of closest matching words
-				while (list($idx, $dist) = each($matches)) {
-					$term = smd_getWord($werds, $search_term, $idx);
+                // Build a unique array of closest matching words
+                while (list($idx, $dist) = each($matches)) {
+                    $term = smd_getWord($werds, $search_term, $idx);
 
-					// Only words meeting the minimum requirement need apply
-					$max_term_len = (strlen($term) > $max_term_len) ? strlen($term) : $max_term_len;
+                    // Only words meeting the minimum requirement need apply
+                    $max_term_len = (strlen($term) > $max_term_len) ? strlen($term) : $max_term_len;
 
-					if (strlen($term) < $min_word_length) {
-						continue;
-					}
+                    if (strlen($term) < $min_word_length) {
+                        continue;
+                    }
 
-					$term = ($case_sensitive) ? $term : strtolower($term);
+                    $term = ($case_sensitive) ? $term : strtolower($term);
 
-					if ($debug > 2) {
-						echo $term.br;
-					}
+                    if ($debug > 2) {
+                        echo $term.br;
+                    }
 
-					if ($dist < $shortestDist) {
-						$shortestDist = $dist;
-						$closestWord = $term;
-					}
+                    if ($dist < $shortestDist) {
+                        $shortestDist = $dist;
+                        $closestWord = $term;
+                    }
 
-					if ($meta_search != "") {
-						$meta_term = metaphone($term);
+                    if ($meta_search != "") {
+                        $meta_term = metaphone($term);
 
-						if ($debug > 2) {
-							echo $meta_term . " : " . $meta_search ." ".br;
-						}
+                        if ($debug > 2) {
+                            echo $meta_term . " : " . $meta_search ." ".br;
+                        }
 
-						$levDist = levenshtein($meta_search, $meta_term);
+                        $levDist = levenshtein($meta_search, $meta_term);
 
-						if ($levDist <= $shortestMetaDist || $shortestMetaDist < 0) {
-							$shortestMetaDist = $levDist;
-							$closestMetaWord  = $term;
-						}
-					}
-				}
+                        if ($levDist <= $shortestMetaDist || $shortestMetaDist < 0) {
+                            $shortestMetaDist = $levDist;
+                            $closestMetaWord  = $term;
+                        }
+                    }
+                }
 
-				// Pick the one that sounds closest to the original
-				if (trim($closestWord) != "") {
-					$idx = md5($closestWord);
-					$bestFit = $closestWord;
-					$bestDist = $shortestDist;
+                // Pick the one that sounds closest to the original
+                if (trim($closestWord) != "") {
+                    $idx = md5($closestWord);
+                    $bestFit = $closestWord;
+                    $bestDist = $shortestDist;
 
-					if ($sound_search != "") {
-						$sound1 = levenshtein(soundex($closestWord), $sound_search);
-						$sound2 = levenshtein(soundex($closestMetaWord), $sound_search);
+                    if ($sound_search != "") {
+                        $sound1 = levenshtein(soundex($closestWord), $sound_search);
+                        $sound2 = levenshtein(soundex($closestMetaWord), $sound_search);
 
-						if ($sound1 >= $sound2) {
-							$idx = md5($closestMetaWord);
-							$bestFit = $closestMetaWord;
-							$bestDist = $shortestMetaDist;
-						}
-					}
+                        if ($sound1 >= $sound2) {
+                            $idx = md5($closestMetaWord);
+                            $bestFit = $closestMetaWord;
+                            $bestDist = $shortestMetaDist;
+                        }
+                    }
 
-					$wordList[$idx] = $bestFit;
-					$wordDist[$idx] = $bestDist;
+                    $wordList[$idx] = $bestFit;
+                    $wordDist[$idx] = $bestDist;
 
-					if ($debug > 2) {
-						echo "++ BEST FIT ++";
-						dmp($bestFit);
-					}
-				}
+                    if ($debug > 2) {
+                        echo "++ BEST FIT ++";
+                        dmp($bestFit);
+                    }
+                }
 
-				// Build an array of unique matching articles
-				if ($max_term_len >= $min_word_length) {
-					if (in_array("textpattern", $dbTables)) {
-						populateArticleData($row);
-					}
+                // Build an array of unique matching articles
+                if ($max_term_len >= $min_word_length) {
+                    if (in_array("textpattern", $dbTables)) {
+                        populateArticleData($row);
+                    }
 
-					// Temporarily assign the closest match to the query string so that
-					// the search_result_excerpt can hilight the found words
-					$pretext['q'] = $term;
-					$artList[] = parse($opform);
-					$pretext['q'] = $search_term;
-				}
-			}
-		}
+                    // Temporarily assign the closest match to the query string so that
+                    // the search_result_excerpt can hilight the found words
+                    $pretext['q'] = $term;
+                    $artList[] = parse($opform);
+                    $pretext['q'] = $search_term;
+                }
+            }
+        }
 
-		// Sort the word list in order of relevance
-		if (count($wordList) > 0) {
-			array_multisort($wordDist,$wordList);
-		}
+        // Sort the word list in order of relevance
+        if (count($wordList) > 0) {
+            array_multisort($wordDist,$wordList);
+        }
 
-		// Output stuff to the page
-		$out .= ($labeltag == "") ? "" : "<" .$labeltag.">";
-		$out .= $no_match_label;
+        // Output stuff to the page
+        $out .= ($labeltag == "") ? "" : "<" .$labeltag.">";
+        $out .= $no_match_label;
 
-		if (count($wordList) > 0) {
-			$out .= (count($showList) > 0) ? $suggest_label : "";
+        if (count($wordList) > 0) {
+            $out .= (count($showList) > 0) ? $suggest_label : "";
 
-			if (in_array("words", $showList)) {
-				$ctr = 0;
+            if (in_array("words", $showList)) {
+                $ctr = 0;
 
-				foreach ($wordList as $item) {
-					if (array_key_exists("words", $limitBy) && $ctr >= $limitBy["words"]) {
-						break;
-					}
+                foreach ($wordList as $item) {
+                    if (array_key_exists("words", $limitBy) && $ctr >= $limitBy["words"]) {
+                        break;
+                    }
 
-					$out .= '<a class="smd_fuzzy_suggest" href="'.smd_addQSVar($pageurl,'q',$item).'">'.$item.'</a>'.n;
-					$ctr++;
-				}
-			}
+                    $out .= '<a class="smd_fuzzy_suggest" href="'.smd_addQSVar($pageurl,'q',$item).'">'.$item.'</a>'.n;
+                    $ctr++;
+                }
+            }
 
-			$out .= ($labeltag == "") ? "" : "</" .$labeltag.">";
+            $out .= ($labeltag == "") ? "" : "</" .$labeltag.">";
 
-			if (in_array("articles", $showList)) {
-				$ctr = 0;
+            if (in_array("articles", $showList)) {
+                $ctr = 0;
 
-				foreach ($artList as $art) {
-					if (array_key_exists("articles", $limitBy) && $ctr >= $limitBy["articles"]) {
-						break;
-					}
+                foreach ($artList as $art) {
+                    if (array_key_exists("articles", $limitBy) && $ctr >= $limitBy["articles"]) {
+                        break;
+                    }
 
-					$out .= $art;
-					$ctr++;
-				}
-			}
-		}
-	}
-	return $out;
+                    $out .= $art;
+                    $ctr++;
+                }
+            }
+        }
+    }
+    return $out;
 }
 
 
@@ -515,298 +516,298 @@ The code uses initial filtering to sort out possible match candidates and then a
 
 if(!class_exists('smd_FuzzyFind')) {
 class smd_FuzzyFind {
-	// The last 3 parameters are for optimization only, to avoid the
-	// surprisingly slow strlen() and substr() calls:
-	//  - $start_index = from which character of $text to start the search
-	//  - $max_len = maximum character to search (starting from $start_index)
-	//  - $text_strlen =
-	// The return value is an array of matches:
-	//   Array( [<match-end-index>] => <error>, ... )
-	// Note: <error> is generally NOT an exact edit distance but rather a
-	// lower bound. This is unfortunate but the routine would be slower if
-	// the exact error was calculate along with the matches.
-	// The function is based on the non-deterministic automaton simulation
-	// algorithm (without bit parallelism optimizations).
-	function search_short($patt, $k, $text, $start_index = 0, $max_len = -1, $text_strlen = -1)
-	{
-		if ($text_strlen < 0) {
-			$text_strlen = strlen($text);
-		}
+    // The last 3 parameters are for optimization only, to avoid the
+    // surprisingly slow strlen() and substr() calls:
+    //  - $start_index = from which character of $text to start the search
+    //  - $max_len = maximum character to search (starting from $start_index)
+    //  - $text_strlen =
+    // The return value is an array of matches:
+    //   Array( [<match-end-index>] => <error>, ... )
+    // Note: <error> is generally NOT an exact edit distance but rather a
+    // lower bound. This is unfortunate but the routine would be slower if
+    // the exact error was calculate along with the matches.
+    // The function is based on the non-deterministic automaton simulation
+    // algorithm (without bit parallelism optimizations).
+    function search_short($patt, $k, $text, $start_index = 0, $max_len = -1, $text_strlen = -1)
+    {
+        if ($text_strlen < 0) {
+            $text_strlen = strlen($text);
+        }
 
-		if ($max_len < 0) {
-			$max_len = $text_strlen;
-		}
+        if ($max_len < 0) {
+            $max_len = $text_strlen;
+        }
 
-		$start_index = (int)max(0, $start_index);
-		$n = min($max_len, $text_strlen - $start_index);
-		$m = strlen($patt);
-		$end_index = $start_index + $n;
+        $start_index = (int)max(0, $start_index);
+        $n = min($max_len, $text_strlen - $start_index);
+        $m = strlen($patt);
+        $end_index = $start_index + $n;
 
-		// If $text is shorter than $patt, use the built-in
-		// levenshtein() instead:
-		if ($n < $m) {
-			$lev = levenshtein(substr($text, $start_index, $n), $patt);
+        // If $text is shorter than $patt, use the built-in
+        // levenshtein() instead:
+        if ($n < $m) {
+            $lev = levenshtein(substr($text, $start_index, $n), $patt);
 
-			if ($lev <= $k) {
-				return Array($start_index + $n - 1 => $lev);
-			} else {
-				return Array();
-			}
-		}
+            if ($lev <= $k) {
+                return Array($start_index + $n - 1 => $lev);
+            } else {
+                return Array();
+            }
+        }
 
-		$s = Array();
+        $s = Array();
 
-		for ($i = 0; $i < $m; $i++) {
-			$c = $patt{$i};
+        for ($i = 0; $i < $m; $i++) {
+            $c = $patt{$i};
 
-			if (isset($s[$c])) {
-				$s[$c] = min($i, $s[$c]);
-			} else {
-				$s[$c] = $i;
-			}
-		}
+            if (isset($s[$c])) {
+                $s[$c] = min($i, $s[$c]);
+            } else {
+                $s[$c] = $i;
+            }
+        }
 
-		if ($end_index < $start_index) {
-			return Array();
-		}
+        if ($end_index < $start_index) {
+            return Array();
+        }
 
-		$matches = Array();
-		$da = $db = range(0, $m - $k + 1);
+        $matches = Array();
+        $da = $db = range(0, $m - $k + 1);
 
-		$mk = $m - $k;
+        $mk = $m - $k;
 
-		for ($t = $start_index; $t < $end_index; $t++) {
-			$c = $text{$t};
-			$in_patt = isset($s[$c]);
+        for ($t = $start_index; $t < $end_index; $t++) {
+            $c = $text{$t};
+            $in_patt = isset($s[$c]);
 
-			if ($t & 1) {
-				$d = &$da;
-				$e = &$db;
-			} else {
-				$d = &$db;
-				$e = &$da;
-			}
+            if ($t & 1) {
+                $d = &$da;
+                $e = &$db;
+            } else {
+                $d = &$db;
+                $e = &$da;
+            }
 
-			for ($i = 1; $i <= $mk; $i++) {
-				$g = min($k + 1, $e[$i] + 1, $e[$i + 1] + 1);
+            for ($i = 1; $i <= $mk; $i++) {
+                $g = min($k + 1, $e[$i] + 1, $e[$i + 1] + 1);
 
-				// TODO: optimize this with a look-up-table?
-				if ($in_patt)
-					for ($j = $e[$i - 1]; ($j < $g && $j <= $mk); $j++) {
-						if ($patt{$i + $j - 1} == $c) {
-							$g = $j;
-						}
-					}
+                // TODO: optimize this with a look-up-table?
+                if ($in_patt)
+                    for ($j = $e[$i - 1]; ($j < $g && $j <= $mk); $j++) {
+                        if ($patt{$i + $j - 1} == $c) {
+                            $g = $j;
+                        }
+                    }
 
-				$d[$i] = $g;
-			}
+                $d[$i] = $g;
+            }
 
-			if ($d[$mk] <= $k) {
-				$err = $d[$mk];
-				$i = min($t-$err + $k + 1, $start_index + $n - 1);
+            if ($d[$mk] <= $k) {
+                $err = $d[$mk];
+                $i = min($t-$err + $k + 1, $start_index + $n - 1);
 
-				if (!isset($matches[$i]) || $err < $matches[$i]) {
-					$matches[$i] = $err;
-				}
-			}
-		}
+                if (!isset($matches[$i]) || $err < $matches[$i]) {
+                    $matches[$i] = $err;
+                }
+            }
+        }
 
-		unset($da, $db);
+        unset($da, $db);
 
-		return $matches;
-	}
+        return $matches;
+    }
 
-	function test_short_search()
-	{
-		$test_text = "Olipa kerran jussi bj&xling ja kolme\n iloista ".
-			"jussi bforling:ia mutta ei yhtaan jussi bjorling-nimista laulajaa.";
-		$test_patt = "jussi bjorling";
-		assert( $this->search_short($test_patt, 4, $test_text) == Array(27=>2, 60=>1, 94=>0));
-		assert( $this->search_short($test_patt, 2, $test_text) == Array(27=>2, 60=>1, 94=>0));
-		assert( $this->search_short($test_patt, 1, $test_text) == Array(60=>1, 94=>0));
-		assert( $this->search_short($test_patt, 0, $test_text) == Array(94=>0));
-		assert( $this->search_short("bjorling", 2, $test_text, 19, 7) == Array());
-		assert( $this->search_short("bjorling", 2, $test_text, 19, 8) == Array(26=>2));
-		assert( $this->search_short("bjorling", 2, $test_text, 20, 8) == Array());
-	}
+    function test_short_search()
+    {
+        $test_text = "Olipa kerran jussi bj&xling ja kolme\n iloista ".
+            "jussi bforling:ia mutta ei yhtaan jussi bjorling-nimista laulajaa.";
+        $test_patt = "jussi bjorling";
+        assert( $this->search_short($test_patt, 4, $test_text) == Array(27=>2, 60=>1, 94=>0));
+        assert( $this->search_short($test_patt, 2, $test_text) == Array(27=>2, 60=>1, 94=>0));
+        assert( $this->search_short($test_patt, 1, $test_text) == Array(60=>1, 94=>0));
+        assert( $this->search_short($test_patt, 0, $test_text) == Array(94=>0));
+        assert( $this->search_short("bjorling", 2, $test_text, 19, 7) == Array());
+        assert( $this->search_short("bjorling", 2, $test_text, 19, 8) == Array(26=>2));
+        assert( $this->search_short("bjorling", 2, $test_text, 20, 8) == Array());
+    }
 
-	var $patt, $patt_len, $max_err;
-	var $parts, $n_parts, $unique_parts, $max_part_len;
-	var $transf_patt;
-	var $too_short_err;
+    var $patt, $patt_len, $max_err;
+    var $parts, $n_parts, $unique_parts, $max_part_len;
+    var $transf_patt;
+    var $too_short_err;
 
-	function __construct ($pattern, $max_error)
-	{
-		$this->patt = $pattern;
-		$this->patt_len = strlen($this->patt);
-		$this->max_err = $max_error;
+    function __construct ($pattern, $max_error)
+    {
+        $this->patt = $pattern;
+        $this->patt_len = strlen($this->patt);
+        $this->max_err = $max_error;
 
-		// Calculate pattern partition size
-		$intpartlen = floor($this->patt_len / ($this->max_err + 2));
+        // Calculate pattern partition size
+        $intpartlen = floor($this->patt_len / ($this->max_err + 2));
 
-		if ($intpartlen < 1) {
-			$this->too_short_err = true;
-			return;
-		} else {
-			$this->too_short_err = false;
-		}
+        if ($intpartlen < 1) {
+            $this->too_short_err = true;
+            return;
+        } else {
+            $this->too_short_err = false;
+        }
 
-		// Partition the pattern for pruning
-		$this->parts = Array();
+        // Partition the pattern for pruning
+        $this->parts = Array();
 
-		for ($i = 0; $i < $this->patt_len; $i += $intpartlen) {
-			if ($i + $intpartlen * 2 > $this->patt_len) {
-				$this->parts[] = substr($this->patt, $i);
-				break;
-			} else {
-				$this->parts[] = substr($this->patt, $i, $intpartlen);
-			}
-		}
+        for ($i = 0; $i < $this->patt_len; $i += $intpartlen) {
+            if ($i + $intpartlen * 2 > $this->patt_len) {
+                $this->parts[] = substr($this->patt, $i);
+                break;
+            } else {
+                $this->parts[] = substr($this->patt, $i, $intpartlen);
+            }
+        }
 
-		$this->n_parts = count($this->parts);
+        $this->n_parts = count($this->parts);
 
-		// The intpartlen test above should have covered this:
-		assert($this->n_parts >= $this->max_err + 1);
+        // The intpartlen test above should have covered this:
+        assert($this->n_parts >= $this->max_err + 1);
 
-		// Find maximum part length
-		foreach ($this->parts as $p) {
-			$this->max_part_len = max( $this->max_part_len, strlen($p));
-		}
+        // Find maximum part length
+        foreach ($this->parts as $p) {
+            $this->max_part_len = max( $this->max_part_len, strlen($p));
+        }
 
-		// Make a new part array with duplicate strings removed
-		$this->unique_parts = array_unique($this->parts);
+        // Make a new part array with duplicate strings removed
+        $this->unique_parts = array_unique($this->parts);
 
-		// Transform the pattern into a low resolution pruning string
-		// by replacing parts with single characters
-		$this->transf_patt = "";
-		reset($this->parts);
+        // Transform the pattern into a low resolution pruning string
+        // by replacing parts with single characters
+        $this->transf_patt = "";
+        reset($this->parts);
 
-		while (list(,$p) = each($this->parts)) {
-		   $this->transf_patt .= chr(array_search($p, $this->unique_parts) + ord("A"));
-		}
+        while (list(,$p) = each($this->parts)) {
+           $this->transf_patt .= chr(array_search($p, $this->unique_parts) + ord("A"));
+        }
 
-		// Self diagnostics
-		$this->test_short_search();
-	}
+        // Self diagnostics
+        $this->test_short_search();
+    }
 
-	function search($text)
-	{
-		// Find all occurrences of unique parts in the
-		// full text. The result is an array:
-		//   Array( <index> => <part#>, .. )
-		$part_map = Array();
-		reset($this->unique_parts);
+    function search($text)
+    {
+        // Find all occurrences of unique parts in the
+        // full text. The result is an array:
+        //   Array( <index> => <part#>, .. )
+        $part_map = Array();
+        reset($this->unique_parts);
 
-		while (list($pi, $part_str) = each($this->unique_parts)) {
-			$pos = strpos($text, $part_str);
+        while (list($pi, $part_str) = each($this->unique_parts)) {
+            $pos = strpos($text, $part_str);
 
-			while ($pos !== false) {
-				$part_map[$pos] = $pi;
-				$pos = strpos($text, $part_str, $pos+1);
-			}
-		}
+            while ($pos !== false) {
+                $part_map[$pos] = $pi;
+                $pos = strpos($text, $part_str, $pos+1);
+            }
+        }
 
-		ksort($part_map); // Sort by string index
+        ksort($part_map); // Sort by string index
 
-		// The following code does several things simultaneously:
-		//  1) Divide the indices into groups using gaps
-		//	  larger than $this->max_err as boundaries.
-		//  2) Translate the groups into strings so that
-		//	  part# 0 = 'A', part# 1 = 'B' etc. to make
-		//	  a low resolution approximate search possible later
-		//  3) Save the string indices in the full string
-		//	  that correspond to characters in the translated string.
-		//  4) Discard groups (=part sequences) that are too
-		//	  short to contain the approximate pattern.
-		// The format of resulting array:
-		//   Array(
-		//	  Array( "<translate-string>",
-		//			 Array( <translated-idx> => <full-index>, ... ) ),
-		//	  ... )
-		$transf = Array();
-		$transf_text = "";
-		$transf_pos = Array();
-		$last_end = 0;
-		$group_len = 0;
-		reset($part_map);
+        // The following code does several things simultaneously:
+        //  1) Divide the indices into groups using gaps
+        //    larger than $this->max_err as boundaries.
+        //  2) Translate the groups into strings so that
+        //    part# 0 = 'A', part# 1 = 'B' etc. to make
+        //    a low resolution approximate search possible later
+        //  3) Save the string indices in the full string
+        //    that correspond to characters in the translated string.
+        //  4) Discard groups (=part sequences) that are too
+        //    short to contain the approximate pattern.
+        // The format of resulting array:
+        //   Array(
+        //    Array( "<translate-string>",
+        //           Array( <translated-idx> => <full-index>, ... ) ),
+        //    ... )
+        $transf = Array();
+        $transf_text = "";
+        $transf_pos = Array();
+        $last_end = 0;
+        $group_len = 0;
+        reset($part_map);
 
-		while (list($i,$p) = each($part_map)) {
-			if ($i - $last_end > $this->max_part_len+$this->max_err) {
-				if ($group_len >= ($this->n_parts-$this->max_err)) {
-					$transf[] = Array( $transf_text, $transf_pos );
-				}
+        while (list($i,$p) = each($part_map)) {
+            if ($i - $last_end > $this->max_part_len+$this->max_err) {
+                if ($group_len >= ($this->n_parts-$this->max_err)) {
+                    $transf[] = Array( $transf_text, $transf_pos );
+                }
 
-				$transf_text = "";
-				$transf_pos = Array();
-				$group_len = 0;
-			}
+                $transf_text = "";
+                $transf_pos = Array();
+                $group_len = 0;
+            }
 
-			$transf_text .= chr($p + ord("A"));
-			$transf_pos[] = $i;
-			$group_len++;
-			$last_end = $i + strlen($this->parts[$p]);
-		}
+            $transf_text .= chr($p + ord("A"));
+            $transf_pos[] = $i;
+            $group_len++;
+            $last_end = $i + strlen($this->parts[$p]);
+        }
 
-		if (strlen($transf_text) >= ($this->n_parts-$this->max_err)) {
-			$transf[] = Array( $transf_text, $transf_pos );
-		}
+        if (strlen($transf_text) >= ($this->n_parts-$this->max_err)) {
+            $transf[] = Array( $transf_text, $transf_pos );
+        }
 
-		unset($transf_text, $transf_pos);
+        unset($transf_text, $transf_pos);
 
-		if (current($transf) === false) {
-			return Array();
-		}
+        if (current($transf) === false) {
+            return Array();
+        }
 
-		// Filter the remaining groups ("approximate anagrams"
-		// of the pattern) and leave only the ones that have enough
-		// parts in correct order. You can think of this last step of the
-		// algorithm as a *low resolution* approximate string search.
-		// The result is an array of candidate text spans to be scanned:
-		//   Array( Array(<full-start-idx>, <full-end-idx>), ... )
-		$part_positions = Array();
+        // Filter the remaining groups ("approximate anagrams"
+        // of the pattern) and leave only the ones that have enough
+        // parts in correct order. You can think of this last step of the
+        // algorithm as a *low resolution* approximate string search.
+        // The result is an array of candidate text spans to be scanned:
+        //   Array( Array(<full-start-idx>, <full-end-idx>), ... )
+        $part_positions = Array();
 
-		while (list(,list($str, $pos_map)) = each($transf)) {
-//			print "|$transf_patt| - |$str|\n";
-			$lores_matches = $this->search_short($this->transf_patt, $this->max_err, $str);
+        while (list(,list($str, $pos_map)) = each($transf)) {
+//          print "|$transf_patt| - |$str|\n";
+            $lores_matches = $this->search_short($this->transf_patt, $this->max_err, $str);
 
-			while (list($tr_end, ) = each($lores_matches)) {
-				$tr_start = max(0, $tr_end - $this->n_parts);
+            while (list($tr_end, ) = each($lores_matches)) {
+                $tr_start = max(0, $tr_end - $this->n_parts);
 
-				if ($tr_end >= $tr_start) {
-					$median_pos = $pos_map[(int)(($tr_start + $tr_end) / 2)];
-					$start = $median_pos - ($this->patt_len / 2 + 1) - $this->max_err - $this->max_part_len;
-					$end = $median_pos + ($this->patt_len / 2 + 1) + $this->max_err + $this->max_part_len;
+                if ($tr_end >= $tr_start) {
+                    $median_pos = $pos_map[(int)(($tr_start + $tr_end) / 2)];
+                    $start = $median_pos - ($this->patt_len / 2 + 1) - $this->max_err - $this->max_part_len;
+                    $end = $median_pos + ($this->patt_len / 2 + 1) + $this->max_err + $this->max_part_len;
 
-//					print "#" . strtr(substr( $text, $start, $end-$start ), "\n\r", "$$") . "#\n";
-//					print_r( $this->search_short( &$this->patt, $this->max_err, &$text, $start, $end-$start ));
+//                  print "#" . strtr(substr( $text, $start, $end-$start ), "\n\r", "$$") . "#\n";
+//                  print_r( $this->search_short( &$this->patt, $this->max_err, &$text, $start, $end-$start ));
 
-					$part_positions[] = Array($start, $end);
-				}
-			}
-			unset( $lores_matches );
-		}
-		unset( $transf );
+                    $part_positions[] = Array($start, $end);
+                }
+            }
+            unset( $lores_matches );
+        }
+        unset( $transf );
 
-		if (current($part_positions) === false) {
-			return Array();
-		}
+        if (current($part_positions) === false) {
+            return Array();
+        }
 
-		// Scan the final candidates and put the matches in a new array:
-		$matches = Array();
-		$text_len = strlen($text);
+        // Scan the final candidates and put the matches in a new array:
+        $matches = Array();
+        $text_len = strlen($text);
 
-		while (list(, list($start, $end)) = each($part_positions)) {
-			$m = $this->search_short($this->patt, $this->max_err, $text, $start, $end - $start, $text_len);
+        while (list(, list($start, $end)) = each($part_positions)) {
+            $m = $this->search_short($this->patt, $this->max_err, $text, $start, $end - $start, $text_len);
 
-			while (list($i, $cost) = each($m)) {
-				$matches[$i] = $cost;
-			}
-		}
+            while (list($i, $cost) = each($m)) {
+                $matches[$i] = $cost;
+            }
+        }
 
-		unset($part_positions);
+        unset($part_positions);
 
-		return $matches;
-	}
+        return $matches;
+    }
 }
 }
 
@@ -824,33 +825,33 @@ Takes 3 args:
 if (!function_exists("smd_getWord")) {
 function smd_getWord($haystack, $searchterm, $offset = 0)
 {
-	$numwords = str_word_count($searchterm);
+    $numwords = str_word_count($searchterm);
 
-	$len = strlen($haystack);
+    $len = strlen($haystack);
 
-	// If we're mid-word, find its end
-	$idx = $offset-1;
+    // If we're mid-word, find its end
+    $idx = $offset-1;
 
-	while ($idx < $len && $haystack[$idx] != " ") {
-		$idx++;
-	}
+    while ($idx < $len && $haystack[$idx] != " ") {
+        $idx++;
+    }
 
-	$offset = $idx;
+    $offset = $idx;
 
-	// Move the word we want to the start
-	$haystack = trim(strrev(substr($haystack,0,$offset)));
+    // Move the word we want to the start
+    $haystack = trim(strrev(substr($haystack,0,$offset)));
 
-	// Make sure to return the correct number of words
-	$spacePos = false;
+    // Make sure to return the correct number of words
+    $spacePos = false;
 
-	for ($idx = 0; $idx < $numwords; $idx++) {
-		$spacePos = (strpos($haystack, " ", $spacePos));
-		if ($spacePos !== false) {
-			$spacePos += 1;
-		}
-	}
+    for ($idx = 0; $idx < $numwords; $idx++) {
+        $spacePos = (strpos($haystack, " ", $spacePos));
+        if ($spacePos !== false) {
+            $spacePos += 1;
+        }
+    }
 
-	return trim(strrev((($spacePos === false) ? $haystack : substr($haystack, 0, $spacePos))));
+    return trim(strrev((($spacePos === false) ? $haystack : substr($haystack, 0, $spacePos))));
 }
 }
 # --- END PLUGIN CODE ---

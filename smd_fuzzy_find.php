@@ -17,9 +17,9 @@ $plugin['name'] = 'smd_fuzzy_find';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.30';
+$plugin['version'] = '0.3.1';
 $plugin['author'] = 'Stef Dawson';
-$plugin['author_uri'] = 'http://stefdawson.com';
+$plugin['author_uri'] = 'https://stefdawson.com';
 $plugin['description'] = 'Offers alternative spellings and/or close-matching articles from search terms.';
 
 // Plugin load order:
@@ -498,7 +498,7 @@ function smd_fuzzy_find($atts, $thing = '')
 
 
 /* smd_FuzzyFind
-A PHP class for approximate string searching of large text masses, adapted (*cough* borrowed) from http://elonen.iki.fi/code/misc-notes/appr-search-php/. Instantiate one of these and pass it the string pattern/word you are looking for and a number indicating how close that match has to be/minimum length of strings to consider (i.e. the amount of error tolerable). 0=close match/short words; 10=pretty much every long (10 char minimum) string in the world. Practical values are usually 1 or 2, sometimes 3.
+A PHP class for approximate string searching of large text masses, adapted (*cough* borrowed) from https://elonen.iki.fi/code/misc-notes/appr-search-php/. Instantiate one of these and pass it the string pattern/word you are looking for and a number indicating how close that match has to be/minimum length of strings to consider (i.e. the amount of error tolerable). 0=close match/short words; 10=pretty much every long (10 char minimum) string in the world. Practical values are usually 1 or 2, sometimes 3.
 
 Usage example:
   $finder = new smd_FuzzyFind($patt, $max_err);
@@ -872,17 +872,17 @@ h2. Features
 * Tweak sensitivity to give better results (more specific, less likely to find a match) or general results (less specific, may match stuff you don't expect)
 * Can offer links to exact search terms if you wish (a bit like Google's "Did you mean ...")
 * Display matching articles using a form/container. Default is the built-in @search_results@ form
-* Unless overridden using the @match_with@ attribute, the Title and Body will be searched. Alternatively, if you have set the search locations using "wet_haystack":http://forum.textpattern.com/viewtopic.php?id=29036 then those places will be searched instead
+* Unless overridden using the @match_with@ attribute, the Title and Body will be searched. Alternatively, if you have set the search locations using "wet_haystack":https://forum.textpattern.com/viewtopic.php?id=29036 then those places will be searched instead
 
 h2. Author
 
-"Stef Dawson":http://stefdawson.com/commentForm, with notable mention to "Jarno Elonen":http://elonen.iki.fi/code/misc-notes/appr-search-php/index.html for the Fuzzy Find algorithm which -- to this day -- remains mere voodoo to me.
+"Stef Dawson":https://stefdawson.com/commentForm, with notable mention to "Jarno Elonen":https://elonen.iki.fi/code/misc-notes/appr-search-php/index.html for the Fuzzy Find algorithm which -- to this day -- remains mere voodoo to me.
 
 h2. Installation / Uninstallation
 
-p(required). Requires Textpattern 4.0.7 and "smd_lib v0.33":http://stefdawson.com/downloads/smd_lib_v0.33.txt must be installed and activated.
+p(required). Requires Textpattern 4.0.7 and "smd_lib v0.33":https://stefdawson.com/downloads/smd_lib_v0.33.txt must be installed and activated.
 
-Download the plugin from either "textpattern.org":http://textpattern.org/plugins/932/smd_fuzzy_find, or the "software page":http://stefdawson.com/sw, paste the code into the TXP Admin -> Plugins pane, install and enable the plugin. Visit the "forum thread":http://forum.textpattern.com/viewtopic.php?id=25367 for more info or to report on the success or otherwise of the plugin.
+Download the plugin from either "textpattern.org":https://textpattern.org/plugins/932/smd_fuzzy_find, or the "software page":https://stefdawson.com/sw, paste the code into the TXP Admin -> Plugins pane, install and enable the plugin. Visit the "forum thread":https://forum.textpattern.com/viewtopic.php?id=25367 for more info or to report on the success or otherwise of the plugin.
 
 To uninstall, simply delete from the Admin -> Plugins page.
 

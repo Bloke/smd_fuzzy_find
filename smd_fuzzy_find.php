@@ -17,7 +17,7 @@ $plugin['name'] = 'smd_fuzzy_find';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.3.1';
+$plugin['version'] = '0.3.2';
 $plugin['author'] = 'Stef Dawson';
 $plugin['author_uri'] = 'https://stefdawson.com';
 $plugin['description'] = 'Offers alternative spellings and/or close-matching articles from search terms.';
@@ -236,7 +236,7 @@ function smd_fuzzy_find($atts, $thing = '')
     }
 
     $thingies = implode(" ".$smd_fuzzLang->gTxt('suggest_join')." ", $thingiesL10n);
-    $no_match_label = ($no_match_label == "#") ? $smd_fuzzLang->gTxt('no_match', array("{search_term}" => $search_term)) : $no_match_label;
+    $no_match_label = ($no_match_label == "#") ? $smd_fuzzLang->gTxt('no_match', array("{search_term}" => txpspecialchars($search_term))) : $no_match_label;
     $suggest_label = ($suggest_label == "#") ? $smd_fuzzLang->gTxt('suggest', array("{thingies}" => $thingies)) : $suggest_label;
     $too_short_label = ($too_short_label == "#") ? $smd_fuzzLang->gTxt('too_short') : $too_short_label;
 

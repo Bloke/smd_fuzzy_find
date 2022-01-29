@@ -3,6 +3,7 @@ h1. Changelog
 h2. 0.3.1 - 2022-01-29
 
 * PHP 8.x compatibility.
+* PHP fixes for deprecated functionality (thanks, jools-r).
 * Escape search term by default when no match found.
 
 h2. 0.3.0 - 2019-03-09

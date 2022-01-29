@@ -17,7 +17,7 @@ $plugin['name'] = 'smd_fuzzy_find';
 // 1 = Plugin help is in raw HTML.  Not recommended.
 # $plugin['allow_html_help'] = 1;
 
-$plugin['version'] = '0.3.2';
+$plugin['version'] = '0.3.1';
 $plugin['author'] = 'Stef Dawson';
 $plugin['author_uri'] = 'https://stefdawson.com';
 $plugin['description'] = 'Offers alternative spellings and/or close-matching articles from search terms.';

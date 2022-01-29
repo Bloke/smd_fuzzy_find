@@ -11,17 +11,17 @@ h2. Features
 * Tweak sensitivity to give better results (more specific, less likely to find a match) or general results (less specific, may match stuff you don't expect)
 * Can offer links to exact search terms if you wish (a bit like Google's "Did you mean ...")
 * Display matching articles using a form/container. Default is the built-in @search_results@ form
-* Unless overridden using the @match_with@ attribute, the Title and Body will be searched. Alternatively, if you have set the search locations using "wet_haystack":http://forum.textpattern.com/viewtopic.php?id=29036 then those places will be searched instead
+* Unless overridden using the @match_with@ attribute, the Title and Body will be searched. Alternatively, if you have set the search locations using "wet_haystack":https://forum.textpattern.com/viewtopic.php?id=29036 then those places will be searched instead
 
 h2. Author
 
-"Stef Dawson":http://stefdawson.com/commentForm, with notable mention to "Jarno Elonen":http://elonen.iki.fi/code/misc-notes/appr-search-php/index.html for the Fuzzy Find algorithm which -- to this day -- remains mere voodoo to me.
+"Stef Dawson":https://stefdawson.com/commentForm, with notable mention to "Jarno Elonen":https://elonen.iki.fi/code/misc-notes/appr-search-php/index.html for the Fuzzy Find algorithm which -- to this day -- remains mere voodoo to me.
 
 h2. Installation / Uninstallation
 
-p(required). Requires Textpattern 4.0.7 and "smd_lib v0.33":http://stefdawson.com/downloads/smd_lib_v0.33.txt must be installed and activated.
+p(required). Requires Textpattern 4.0.7 and "smd_lib v0.33":https://stefdawson.com/downloads/smd_lib_v0.33.txt must be installed and activated.
 
-Download the plugin from either "textpattern.org":http://textpattern.org/plugins/932/smd_fuzzy_find, or the "software page":http://stefdawson.com/sw, paste the code into the TXP Admin -> Plugins pane, install and enable the plugin. Visit the "forum thread":http://forum.textpattern.com/viewtopic.php?id=25367 for more info or to report on the success or otherwise of the plugin.
+Download the plugin from either "textpattern.org":https://textpattern.org/plugins/932/smd_fuzzy_find, or the "software page":https://stefdawson.com/sw, paste the code into the TXP Admin -> Plugins pane, install and enable the plugin. Visit the "forum thread":https://forum.textpattern.com/viewtopic.php?id=25367 for more info or to report on the success or otherwise of the plugin.
 
 To uninstall, simply delete from the Admin -> Plugins page.
 

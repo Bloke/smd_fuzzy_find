@@ -313,7 +313,7 @@ function smd_fuzzy_find($atts, $thing = '')
         $out .= ($labeltag == "") ? "" : "</" .$labeltag.">";
     } else {
         $cols = "*" . ((in_array("textpattern", $dbTables)) ? ", unix_timestamp(textpattern.Posted) AS uPosted, unix_timestamp(textpattern.LastMod) AS uLastMod, unix_timestamp(textpattern.Expires) AS uExpires" : "");
-        $rs = safe_rows_start($cols, implode($dbTables, ", "), $clause, $debug);
+        $rs = safe_rows_start($cols, implode(", ", $dbTables), $clause, $debug);
 
         if (in_array("textpattern",$dbTables)) {
             $opform = ($thing) ? $thing : fetch_form($form);
@@ -347,7 +347,7 @@ function smd_fuzzy_find($atts, $thing = '')
             // Split the remainder by (single or multiple) spaces
             $werds = preg_split('/\s+/', $allFields, -1, PREG_SPLIT_NO_EMPTY);
             // ...and reconstitute the unique words as a huge space-delimited string
-            $werds = implode(" ",array_unique($werds));
+            $werds = implode(" ", array_unique($werds));
             // Take into account case sensitivity
             $werds = ($case_sensitive) ? $werds : strtolower($werds);
 
@@ -374,7 +374,7 @@ function smd_fuzzy_find($atts, $thing = '')
                 $max_term_len = 0;
 
                 // Build a unique array of closest matching words
-                while (list($idx, $dist) = each($matches)) {
+                foreach ($matches as $idx => $dist) {
                     $term = smd_getWord($werds, $search_term, $idx);
 
                     // Only words meeting the minimum requirement need apply
@@ -682,7 +682,7 @@ class smd_FuzzyFind {
         $this->transf_patt = "";
         reset($this->parts);
 
-        while (list(,$p) = each($this->parts)) {
+        foreach ($this->parts as $p) {
            $this->transf_patt .= chr(array_search($p, $this->unique_parts) + ord("A"));
         }
 
@@ -698,7 +698,7 @@ class smd_FuzzyFind {
         $part_map = Array();
         reset($this->unique_parts);
 
-        while (list($pi, $part_str) = each($this->unique_parts)) {
+        foreach ($this->unique_parts as $pi => $part_str) {
             $pos = strpos($text, $part_str);
 
             while ($pos !== false) {
@@ -731,7 +731,7 @@ class smd_FuzzyFind {
         $group_len = 0;
         reset($part_map);
 
-        while (list($i,$p) = each($part_map)) {
+        foreach ($part_map as $i => $p) {
             if ($i - $last_end > $this->max_part_len+$this->max_err) {
                 if ($group_len >= ($this->n_parts-$this->max_err)) {
                     $transf[] = Array( $transf_text, $transf_pos );
@@ -766,11 +766,13 @@ class smd_FuzzyFind {
         //   Array( Array(<full-start-idx>, <full-end-idx>), ... )
         $part_positions = Array();
 
-        while (list(,list($str, $pos_map)) = each($transf)) {
+        foreach ($transf as $idx => $matchBlock) {
+            $str = $matchBlock[0];
+            $pos_map = $matchBlock[1];
 //          print "|$transf_patt| - |$str|\n";
             $lores_matches = $this->search_short($this->transf_patt, $this->max_err, $str);
 
-            while (list($tr_end, ) = each($lores_matches)) {
+            foreach ($lores_matches as $tr_end => $unused) {
                 $tr_start = max(0, $tr_end - $this->n_parts);
 
                 if ($tr_end >= $tr_start) {
@@ -784,9 +786,11 @@ class smd_FuzzyFind {
                     $part_positions[] = Array($start, $end);
                 }
             }
-            unset( $lores_matches );
+
+            unset($lores_matches);
         }
-        unset( $transf );
+
+        unset($transf);
 
         if (current($part_positions) === false) {
             return Array();
@@ -796,10 +800,12 @@ class smd_FuzzyFind {
         $matches = Array();
         $text_len = strlen($text);
 
-        while (list(, list($start, $end)) = each($part_positions)) {
+        foreach ($part_positions as $idx => $partBlock) {
+            $start = $partBlock[0];
+            $end = $partBlock[1];
             $m = $this->search_short($this->patt, $this->max_err, $text, $start, $end - $start, $text_len);
 
-            while (list($i, $cost) = each($m)) {
+            foreach ($m as $i => $cost) {
                 $matches[$i] = $cost;
             }
         }
@@ -830,7 +836,7 @@ function smd_getWord($haystack, $searchterm, $offset = 0)
     $len = strlen($haystack);
 
     // If we're mid-word, find its end
-    $idx = $offset-1;
+    $idx = $offset - 1;
 
     while ($idx < $len && $haystack[$idx] != " ") {
         $idx++;

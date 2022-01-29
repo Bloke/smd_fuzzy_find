@@ -558,7 +558,7 @@ class smd_FuzzyFind {
         $s = Array();
 
         for ($i = 0; $i < $m; $i++) {
-            $c = $patt{$i};
+            $c = $patt[$i];
 
             if (isset($s[$c])) {
                 $s[$c] = min($i, $s[$c]);
@@ -577,7 +577,7 @@ class smd_FuzzyFind {
         $mk = $m - $k;
 
         for ($t = $start_index; $t < $end_index; $t++) {
-            $c = $text{$t};
+            $c = $text[$t];
             $in_patt = isset($s[$c]);
 
             if ($t & 1) {
@@ -594,7 +594,7 @@ class smd_FuzzyFind {
                 // TODO: optimize this with a look-up-table?
                 if ($in_patt)
                     for ($j = $e[$i - 1]; ($j < $g && $j <= $mk); $j++) {
-                        if ($patt{$i + $j - 1} == $c) {
+                        if ($patt[$i + $j - 1] == $c) {
                             $g = $j;
                         }
                     }
